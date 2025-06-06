@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<!-- saved from url=(0067)file:///C:/Users/jigsi/Downloads/deepseek_html_20250516_14e651.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Future Gen Bot - AI Adventure</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #0a0a1a;
+            color: #0ff;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        #game-container {
+            width: 600px;
+            height: 400px;
+            margin: 20px auto;
+            position: relative;
+            background: #000033;
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #bot {
+            width: 50px;
+            height: 70px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 70"><rect x="10" y="20" width="30" height="40" fill="%2300ffff" rx="5"/><circle cx="25" cy="15" r="10" fill="%2300ffff"/><circle cx="20" cy="12" r="3" fill="%23000"/><circle cx="30" cy="12" r="3" fill="%23000"/><rect x="15" y="35" width="5" height="15" fill="%23007777"/><rect x="30" y="35" width="5" height="15" fill="%23007777"/></svg>') no-repeat center;
+            position: absolute;
+            bottom: 20px;
+            left: 275px;
+            z-index: 10;
+        }
+
+        .enemy {
+            width: 40px;
+            height: 60px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 60"><rect x="10" y="20" width="20" height="30" fill="%23ff0055" rx="5"/><circle cx="20" cy="12" r="8" fill="%23ff0055"/><circle cx="16" cy="10" r="2" fill="%23000"/><circle cx="24" cy="10" r="2" fill="%23000"/><path d="M16 25 Q20 30 24 25" stroke="%23000" stroke-width="1" fill="none"/></svg>') no-repeat center;
+            position: absolute;
+            top: -60px;
+            z-index: 5;
+        }
+
+        .bullet {
+            width: 4px;
+            height: 12px;
+            background: #00ffaa;
+            position: absolute;
+            z-index: 8;
+            border-radius: 2px;
+        }
+
+        #hud {
+            display: flex;
+            justify-content: space-around;
+            width: 580px;
+            margin: 10px auto;
+            font-size: 16px;
+        }
+
+        #controls {
+            margin: 20px auto;
+            padding: 10px;
+            background: rgba(0, 20, 40, 0.7);
+            border-radius: 10px;
+            width: 580px;
+        }
+
+        #game-over, #game-start {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 50, 0.9);
+            padding: 20px;
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            z-index: 100;
+            width: 80%;
+            max-width: 400px;
+        }
+
+        #game-start {
+            display: block;
+        }
+
+        #game-over {
+            display: none;
+        }
+
+        button {
+            background: #003366;
+            color: #00ffff;
+            border: 1px solid #00ffff;
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #005588;
+        }
+
+        .ai-message {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 50, 100, 0.8);
+            padding: 8px 16px;
+            border-radius: 5px;
+            border: 1px solid #00ffff;
+            display: none;
+            z-index: 101;
+            font-size: 14px;
+        }
+
+        .neural-effect {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: 
+                linear-gradient(90deg, 
+                    rgba(0, 255, 255, 0.05) 1px, 
+                    transparent 1px),
+                linear-gradient(0deg, 
+                    rgba(0, 255, 255, 0.05) 1px, 
+                    transparent 1px);
+            background-size: 20px 20px;
+            z-index: 1;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🤖 Future Gen Bot Adventure</h1>
+    
+    <div id="hud">
+        <div>⚡ Energy: <span id="energy">100</span></div>
+        <div>🔧 AI Cores: <span id="score">0</span></div>
+        <div>🧠 Level: <span id="level">1</span></div>
+    </div>
+
+    <div id="game-container">
+        <div class="neural-effect"></div>
+        <div id="bot"></div>
+        <div class="ai-message" id="ai-message" style="display: none;">Initiate training sequence when ready</div>
+    </div>
+
+    <div id="controls">
+        <p>Use <strong>← → Arrow Keys</strong> to move | Press <strong>SPACE</strong> to fire</p>
+    </div>
+
+    <div id="game-start">
+        <h2>AI Training Mission</h2>
+        <p>Defeat the rogue robots before they reach you!</p>
+        <button onclick="startGame()">Start Mission</button>
+    </div>
+
+    <div id="game-over">
+        <h2>Mission Failed</h2>
+        <p>Your bot took too much damage!</p>
+        <p>AI Cores Collected: <span id="final-score">0</span></p>
+        <button onclick="resetGame()">Try Again</button>
+    </div>
+
+    <script>
+        // Game variables
+        let energy = 100;
+        let score = 0;
+        let level = 1;
+        let botSpeed = 6;
+        let fireRate = 400;
+        let lastShot = 0;
+        let gameActive = false;
+        let enemies = [];
+        let bullets = [];
+        let leftPressed = false;
+        let rightPressed = false;
+
+        // Initialize game
+        function startGame() {
+            document.getElementById('game-start').style.display = 'none';
+            gameActive = true;
+            energy = 100;
+            score = 0;
+            level = 1;
+            updateHUD();
+            document.getElementById('game-over').style.display = 'none';
+            
+            // Clear any existing enemies or bullets
+            enemies.forEach(enemy => enemy.element.remove());
+            bullets.forEach(bullet => bullet.element.remove());
+            enemies = [];
+            bullets = [];
+            
+            // Position bot in center
+            document.getElementById('bot').style.left = '275px';
+            
+            showAIMessage("Systems online! Defend the neural network!");
+
+            // Spawn enemies every 2 seconds
+            setInterval(spawnEnemy, 2000);
+
+            // Game loop running at 60fps
+            setInterval(gameLoop, 16);
+        }
+
+        // Main game loop
+        function gameLoop() {
+            if (!gameActive) return;
+
+            // Move bot based on key states
+            const bot = document.getElementById('bot');
+            let currentLeft = parseInt(bot.style.left);
+            
+            if (leftPressed && currentLeft > 0) {
+                bot.style.left = (currentLeft - botSpeed) + 'px';
+            }
+            if (rightPressed && currentLeft < 550) {
+                bot.style.left = (currentLeft + botSpeed) + 'px';
+            }
+
+            // Move bullets
+            bullets.forEach((bullet, index) => {
+                bullet.top -= 8;
+                bullet.element.style.top = bullet.top + 'px';
+
+                // Remove if out of bounds
+                if (bullet.top < 0) {
+                    bullet.element.remove();
+                    bullets.splice(index, 1);
+                }
+            });
+
+            // Move enemies
+            enemies.forEach((enemy, eIndex) => {
+                enemy.top += 2;
+                enemy.element.style.top = enemy.top + 'px';
+
+                // Check collision with bot
+                const botRect = bot.getBoundingClientRect();
+                const enemyRect = enemy.element.getBoundingClientRect();
+                
+                if (enemy.top > 320 && 
+                    enemyRect.left < botRect.right && 
+                    enemyRect.right > botRect.left) {
+                    energy -= 10;
+                    updateHUD();
+                    enemy.element.remove();
+                    enemies.splice(eIndex, 1);
+                    showAIMessage("Warning! Damage detected!");
+                    if (energy <= 0) gameOver();
+                }
+
+                // Check collision with bullets
+                bullets.forEach((bullet, bIndex) => {
+                    const bulletRect = bullet.element.getBoundingClientRect();
+                    if (enemyRect.left < bulletRect.right && 
+                        enemyRect.right > bulletRect.left &&
+                        enemyRect.top < bulletRect.bottom &&
+                        enemyRect.bottom > bulletRect.top) {
+                        enemy.element.remove();
+                        enemies.splice(eIndex, 1);
+                        bullet.element.remove();
+                        bullets.splice(bIndex, 1);
+                        score++;
+                        updateHUD();
+                        
+                        // Celebration every 5 points
+                        if (score % 5 === 0) {
+                            showAIMessage("Excellent! Neural pathways strengthening!");
+                        }
+                    }
+                });
+
+                // Remove if out of bounds
+                if (enemy.top > 400) {
+                    enemy.element.remove();
+                    enemies.splice(eIndex, 1);
+                }
+            });
+        }
+
+        // Spawn enemy at random position
+        function spawnEnemy() {
+            if (!gameActive) return;
+            const enemy = document.createElement('div');
+            enemy.className = 'enemy';
+            enemy.style.left = Math.floor(Math.random() * 560) + 'px';
+            document.getElementById('game-container').appendChild(enemy);
+            enemies.push({ element: enemy, top: -60 });
+        }
+
+        // Fire a bullet from bot position
+        function fire() {
+            if (!gameActive || Date.now() - lastShot < fireRate) return;
+            lastShot = Date.now();
+
+            const bullet = document.createElement('div');
+            bullet.className = 'bullet';
+            const bot = document.getElementById('bot');
+            const botLeft = parseInt(bot.style.left);
+            bullet.style.left = (botLeft + 23) + 'px';
+            bullet.style.top = '330px';
+            document.getElementById('game-container').appendChild(bullet);
+            bullets.push({ element: bullet, left: botLeft + 23, top: 330 });
+        }
+
+        // Update the HUD display
+        function updateHUD() {
+            document.getElementById('energy').textContent = energy;
+            document.getElementById('score').textContent = score;
+            document.getElementById('level').textContent = level;
+        }
+
+        // Game over sequence
+        function gameOver() {
+            gameActive = false;
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('game-over').style.display = 'block';
+            showAIMessage("Critical failure! Rebooting...");
+        }
+
+        // Reset the game completely
+        function resetGame() {
+            startGame();
+        }
+
+        // Show AI message at bottom
+        function showAIMessage(message) {
+            const msgBox = document.getElementById('ai-message');
+            msgBox.textContent = message;
+            msgBox.style.display = 'block';
+            setTimeout(() => {
+                msgBox.style.display = 'none';
+            }, 2000);
+        }
+
+        // Keyboard event listeners - FIXED CONTROLS
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') leftPressed = true;
+            if (e.key === 'ArrowRight') rightPressed = true;
+            if (e.key === ' ') fire();
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft') leftPressed = false;
+            if (e.key === 'ArrowRight') rightPressed = false;
+        });
+
+        // Touch controls for mobile
+        let touchStartX = 0;
+        document.getElementById('game-container').addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            fire(); // Fire on touch
+        }, {passive: true});
+
+        document.getElementById('game-container').addEventListener('touchmove', (e) => {
+            const touchX = e.touches[0].clientX;
+            const bot = document.getElementById('bot');
+            let currentLeft = parseInt(bot.style.left);
+            
+            if (touchX < touchStartX - 10 && currentLeft > 0) {
+                bot.style.left = (currentLeft - botSpeed) + 'px';
+                touchStartX = touchX;
+            }
+            else if (touchX > touchStartX + 10 && currentLeft < 550) {
+                bot.style.left = (currentLeft + botSpeed) + 'px';
+                touchStartX = touchX;
+            }
+        }, {passive: true});
+
+        // Initial AI message
+        showAIMessage("Initiate training sequence when ready");
+    </script>
+
+</body></html>
